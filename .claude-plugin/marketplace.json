@@ -1,0 +1,12 @@
+{
+  "name": "mayak",
+  "owner": {
+    "name": "Aleksandr_NFA"
+  },
+  "plugins": [
+    {
+      "name": "mayak",
+      "source": "./"
+    }
+  ]
+}
