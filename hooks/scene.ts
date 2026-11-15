@@ -58,8 +58,8 @@ const TONES: [string, string] = [
 ]
 
 const LAMP: Point = [1450, 356]
-/** The sun by day, the moon by night: far enough right to clear the app's sidebar. */
-const SUN: Point = [540, 172]
+/** The sun by day, the moon by night: in the gap between the app's sidebar and the conversation, a little down toward the bay. */
+const SUN: Point = [420, 205]
 
 function fixed(value: number): number {
   return Number(value.toFixed(1))
@@ -198,9 +198,9 @@ function sky(): string {
     paper(shape('sunCore', facetEllipse(sunAt[0] - 6, sunAt[1] - 6, 40, 40, 16, 4)), 'sunCore', 1.2)
   day += moving('breathe', moving('spin', sun, 90, 0, sunAt), 9, 0, sunAt)
   night += paper(shape('moon', facetEllipse(sunAt[0], sunAt[1], 52, 52, 16, 5)), 'moon', 4)
-  night += paper(shape('crater1', facetEllipse(522, 158, 10, 9, 8, 6)), 'crater', 0, false)
-  night += paper(shape('crater2', facetEllipse(558, 190, 7, 6, 7, 7)), 'crater', 0, false)
-  night += paper(shape('crater3', facetEllipse(550, 146, 5, 5, 6, 8)), 'crater', 0, false)
+  night += paper(shape('crater1', facetEllipse(sunAt[0] - 18, sunAt[1] - 14, 10, 9, 8, 6)), 'crater', 0, false)
+  night += paper(shape('crater2', facetEllipse(sunAt[0] + 18, sunAt[1] + 18, 7, 6, 7, 7)), 'crater', 0, false)
+  night += paper(shape('crater3', facetEllipse(sunAt[0] + 10, sunAt[1] - 26, 5, 5, 6, 8)), 'crater', 0, false)
 
   for (let i = 0; i < 30; i += 1) {
     const x = 40 + hash(i, 11) * 1520
@@ -211,8 +211,9 @@ function sky(): string {
     night += i % 2 === 0 ? moving('twinkle', piece, 2.5 + hash(i, 14) * 3.5, hash(i, 15) * 6, [x, y]) : piece
   }
 
+  // The first cloud drifts in front of the sun's lower edge, in the same gap beside the conversation.
   const clouds: [number, number, number, number, number][] = [
-    [620, 262, 230, 62, 44],
+    [330, 270, 180, 50, 44],
     [1020, 156, 270, 70, 38],
     [40, 480, 200, 50, 52],
     [700, 96, 170, 44, 60],
