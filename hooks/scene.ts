@@ -31,6 +31,7 @@ const PAINTS: Record<string, [string, string]> = {
   sea3: ['#8fb5b6', '#283f56'],
   sea4: ['#76a2a7', '#2e4962'],
   foam: ['#f8f4ec', '#6f8ca8'],
+  glint: ['#fffdf6', '#f3e7c4'],
   rock: ['#b5a793', '#2a313c'],
   rockDark: ['#9c8e7a', '#222831'],
   rockLight: ['#c7baa6', '#343c48'],
@@ -57,6 +58,8 @@ const TONES: [string, string] = [
 ]
 
 const LAMP: Point = [1450, 356]
+/** The sun by day, the moon by night: far enough right to clear the app's sidebar. */
+const SUN: Point = [540, 172]
 
 function fixed(value: number): number {
   return Number(value.toFixed(1))
@@ -190,7 +193,7 @@ function moving(cls: string, body: string, seconds: number, delay: number, origi
 function sky(): string {
   let day = ''
   let night = ''
-  const sunAt: Point = [540, 172]
+  const sunAt = SUN
   const sun = paper(shape('sun', facetEllipse(sunAt[0], sunAt[1], 60, 60, 22, 3)), 'sun', 4) +
     paper(shape('sunCore', facetEllipse(sunAt[0] - 6, sunAt[1] - 6, 40, 40, 16, 4)), 'sunCore', 1.2)
   day += moving('breathe', moving('spin', sun, 90, 0, sunAt), 9, 0, sunAt)
@@ -272,7 +275,10 @@ function sea(): string {
   const hills = paper(shape('hillFar', [[-120, 820], [-120, 770], [-20, 752], [80, 738], [170, 742], [240, 760], [300, 788], [360, 820]]), 'hillFar', 2)
   const isle = paper(shape('isle', [[-120, 820], [-120, 794], [10, 776], [100, 758], [180, 752], [250, 762], [320, 782], [420, 808], [420, 820]]), 'isle', 3)
   // A small ship far out on the horizon, crossing slowly; its light comes on at night.
+  // It always sails one way, so it trails a thin wake astern that shimmers.
   const ship = moving('cross',
+    moving('shimmer', paper(shape('shipWake', [[862, 795.5], [828, 796.5], [770, 798.4], [828, 799.6], [862, 799.4]]), 'foam', 0, false), 3.2, 0, [862, 797.5]) +
+    paper(shape('shipBow', [[928, 795.5], [940, 798.6], [926, 799.4]]), 'foam', 0, false) +
     paper(shape('shipHull', [[860, 790], [930, 790], [922, 798], [866, 798]]), 'ship', 1) +
     paper(shape('shipCabin', rect(884, 780, 906, 790)), 'ship', 0.8) +
     paper(shape('shipStack', rect(896, 772, 902, 780)), 'ship', 0.5) +
@@ -315,21 +321,51 @@ function sea(): string {
     paper(shape('mast', rect(248 + bx, 812 + by, 252 + bx, 904 + by)), 'iron', 1, false) +
     paper(shape('mainsail', [[254 + bx, 818 + by], [254 + bx, 898 + by], [318 + bx, 896 + by]]), 'sail', 2) +
     moving('wave', paper(shape('flag', [[250 + bx, 802 + by], [270 + bx, 807 + by], [250 + bx, 813 + by]]), 'flag', 1), 2.2, 1, [250 + bx, 807 + by]) +
-    paper(shape('hull', [[170 + bx, 902 + by], [330 + bx, 902 + by], [306 + bx, 932 + by], [194 + bx, 932 + by]]), 'hull', 3) +
-    paper(shape('wake', [[156 + bx, 930 + by], [190 + bx, 922 + by], [228 + bx, 930 + by], [190 + bx, 936 + by]]), 'foam', 0, false)
-  const boat = moving('sailAcross', moving('bob', boatBody, 4.5, 2, [250 + bx, 930 + by]), 70, 10)
+    paper(shape('hull', [[170 + bx, 902 + by], [330 + bx, 902 + by], [306 + bx, 932 + by], [194 + bx, 932 + by]]), 'hull', 3)
+  // The bow is on the jib's side. A splash rises there only while the bow dips into a wave: it runs on the bob's
+  // clock (same length, same start, both alternate) but outside the bob, so the foam stays on the water.
+  // A fan of paper tongues thrown forward and up from the waterline at the bow, and a few drops beyond them.
+  const tongues: [number, number, number, number, number][] = [[166, 142, 906, 12, -4], [174, 130, 894, 10, 3], [180, 160, 886, 9, -3]]
+  let spray = ''
+  tongues.forEach(([x, tx, ty, w, bend], i) => {
+    spray += paper(shape(`spray${i}`, blade(x + bx, 932 + by, tx + bx, ty + by, w, bend)), 'foam', 0.6)
+  })
+  const drops: Point[] = [[134, 888], [122, 900], [152, 878]]
+  drops.forEach(([x, y], i) => {
+    spray += paper(shape(`drop${i}`, facetEllipse(x + bx, y + by, 2.6 - i * 0.4, 2.6 - i * 0.4, 6, 84 + i)), 'foam', 0.4, false)
+  })
+  const splash = moving('splash', spray, 4.5, 2, [172 + bx, 932 + by])
+  const boat = moving('sailAcross', moving('bob', boatBody, 4.5, 2, [250 + bx, 930 + by]) + splash, 70, 10)
 
   return (
     hills + isle +
-    wave(1, 792, 8, 16, 'swell') + ship +
-    wave(2, 846, 12, 13, 'swell') +
+    wave(1, 792, 8, 16, 'swell') + glints(1, 800, 842, 12) + ship +
+    wave(2, 846, 12, 13, 'swell') + glints(2, 856, 896, 11) +
     cliff + facet + lighthouse() + footGrass + ridgeFace + ridge + pebbles + front +
-    wave(3, 900, 15, 11, 'swellBob') +
+    wave(3, 900, 15, 11, 'swellBob') + glints(3, 912, 952, 10) +
     boat +
     wave(4, 958, 17, 9, 'swellBob') +
     '<ellipse cx="920" cy="930" rx="560" ry="250" fill="url(#mist)"/>' +
     grass()
   )
+}
+
+/**
+ * The sun's path on the water by day, the moon's by night: paper slivers under it, on one sea layer, glinting in turn.
+ * They hold still while the waves slide, as a reflection stays under its light; the path widens toward the viewer.
+ */
+function glints(layer: number, top: number, bottom: number, count: number): string {
+  let out = ''
+  for (let i = 0; i < count; i += 1) {
+    const y = top + (bottom - top) * ((i + hash(i, 100 + layer)) / count)
+    const near = (y - 792) / 170
+    const x = SUN[0] + (hash(i, 110 + layer) - 0.5) * 2 * (16 + 64 * near)
+    const w = (5 + 16 * near) * (0.6 + hash(i, 120 + layer) * 0.8)
+    const h = 1.3 + near * 1.6
+    const piece = paper(shape(`glint${layer}_${i}`, [[x - w, y], [x - w * 0.2, y - h], [x + w, y], [x + w * 0.1, y + h * 0.7]]), 'glint', 0, false)
+    out += moving('glimmer', piece, 1.4 + hash(i, 130 + layer) * 2.2, hash(i, 140 + layer) * 4, [x, y])
+  }
+  return out
 }
 
 /** Dune grass and sea-pinks in the bottom corners, swaying from their roots like the Paper Garden sprigs. */
@@ -403,6 +439,13 @@ const MOTION =
   '.sway{animation:sway 6s ease-in-out infinite alternate}' +
   '.swayBack{animation:swayBack 7s ease-in-out infinite alternate}' +
   '.nod{animation:nod 7s ease-in-out infinite alternate}' +
+  '.splash{animation:splash 4.5s ease-in-out infinite alternate}' +
+  '.shimmer{animation:shimmer 3s ease-in-out infinite alternate}' +
+  '.glimmer{animation:glimmer 2s ease-in-out infinite alternate}' +
+  // The bob starts with the bow down; the splash is full there and gone once the bow has lifted a little.
+  '@keyframes splash{0%{opacity:1;transform:scale(1)}30%,100%{opacity:0;transform:scale(.5,.15)}}' +
+  '@keyframes shimmer{from{opacity:.45;transform:scaleX(.92)}to{opacity:.9;transform:scaleX(1)}}' +
+  '@keyframes glimmer{0%,30%{opacity:.22;transform:scaleX(.6)}100%{opacity:1;transform:scaleX(1.15)}}' +
   '@keyframes sweep{0%{transform:scaleX(1)}10%{transform:scaleX(.81)}20%{transform:scaleX(.31)}25%{transform:scaleX(.02)}' +
   '30%{transform:scaleX(-.31)}40%{transform:scaleX(-.81)}50%{transform:scaleX(-1)}60%{transform:scaleX(-.81)}' +
   '70%{transform:scaleX(-.31)}75%{transform:scaleX(-.02)}80%{transform:scaleX(.31)}90%{transform:scaleX(.81)}100%{transform:scaleX(1)}}' +

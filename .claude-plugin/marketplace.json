@@ -3,6 +3,9 @@
   "owner": {
     "name": "Aleksandr_NFA"
   },
+  "metadata": {
+    "description": "Mayak: a cut-paper lighthouse theme for the Claude desktop app that follows the system's light or dark mode."
+  },
   "plugins": [
     {
       "name": "mayak",
