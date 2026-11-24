@@ -1,6 +1,6 @@
 {
   "name": "mayak",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Mayak: a cut-paper lighthouse behind the chat in the Claude desktop app. Follows the system's light or dark mode: sun, clouds and gulls by day; moon, stars and a turning beam by night.",
   "author": {
     "name": "Aleksandr_NFA",

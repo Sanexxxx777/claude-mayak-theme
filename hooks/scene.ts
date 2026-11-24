@@ -420,9 +420,14 @@ function paintRules(mode: 0 | 1): string {
   return Object.entries(PAINTS).map(([name, values]) => `.${name}{fill:${values[mode]}}`).join('')
 }
 
-/** The beam turns like a lens seen from the side: its length is cos(angle), so it passes the viewer, then swings round behind. */
+/**
+ * The beam turns like a lens seen from the side: its length is cos(angle), so it passes the viewer, then swings round behind.
+ * One half-turn from 1 to -1 on the sine ease, played back and forth, is that cosine (within 0.4 % of the length): the speed
+ * changes smoothly and the beam slows to a stop at each end. Linear steps between cosine samples jerked the beam every 1.6 s
+ * (2.6 times faster from one step to the next) and bounced it straight back at full length.
+ */
 const MOTION =
-  `.sweep{transform-origin:${LAMP[0]}px ${LAMP[1]}px;animation:sweep 16s linear infinite}` +
+  `.sweep{transform-origin:${LAMP[0]}px ${LAMP[1]}px;animation:sweep 8s cubic-bezier(.37,0,.63,1) infinite alternate}` +
   '.glow{animation:flash 16s linear infinite}' +
   '.spin{animation:spin 90s linear infinite}' +
   '.breathe{animation:breathe 9s ease-in-out infinite alternate}' +
@@ -447,9 +452,8 @@ const MOTION =
   '@keyframes splash{0%{opacity:1;transform:scale(1)}30%,100%{opacity:0;transform:scale(.5,.15)}}' +
   '@keyframes shimmer{from{opacity:.45;transform:scaleX(.92)}to{opacity:.9;transform:scaleX(1)}}' +
   '@keyframes glimmer{0%,30%{opacity:.22;transform:scaleX(.6)}100%{opacity:1;transform:scaleX(1.15)}}' +
-  '@keyframes sweep{0%{transform:scaleX(1)}10%{transform:scaleX(.81)}20%{transform:scaleX(.31)}25%{transform:scaleX(.02)}' +
-  '30%{transform:scaleX(-.31)}40%{transform:scaleX(-.81)}50%{transform:scaleX(-1)}60%{transform:scaleX(-.81)}' +
-  '70%{transform:scaleX(-.31)}75%{transform:scaleX(-.02)}80%{transform:scaleX(.31)}90%{transform:scaleX(.81)}100%{transform:scaleX(1)}}' +
+  '@keyframes sweep{from{transform:scaleX(1)}to{transform:scaleX(-1)}}' +
+  // The lamp flares as the beam passes the viewer: at 4 s, the middle of the first half-turn, once per 16 s turn.
   '@keyframes flash{0%,15%{opacity:.45}25%{opacity:1}35%,100%{opacity:.45}}' +
   '@keyframes spin{to{transform:rotate(360deg)}}' +
   '@keyframes breathe{from{transform:scale(.97)}to{transform:scale(1.04)}}' +
